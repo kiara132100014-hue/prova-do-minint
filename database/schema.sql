@@ -1,0 +1,59 @@
+CREATE TABLE IF NOT EXISTS users (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('user','admin') NOT NULL DEFAULT 'user',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS categories (
+  id INT UNSIGNED PRIMARY KEY,
+  name VARCHAR(160) NOT NULL,
+  source VARCHAR(200) NOT NULL DEFAULT ''
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS questions (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  category_id INT UNSIGNED NOT NULL,
+  question TEXT NOT NULL,
+  opt_a VARCHAR(500) NOT NULL,
+  opt_b VARCHAR(500) NOT NULL,
+  opt_c VARCHAR(500) NOT NULL,
+  opt_d VARCHAR(500) NOT NULL,
+  correct CHAR(1) NOT NULL,
+  explanation TEXT NOT NULL,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_cat (category_id),
+  CONSTRAINT fk_q_cat FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS attempts (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  mode ENUM('treino','exame') NOT NULL DEFAULT 'treino',
+  source VARCHAR(20) NOT NULL DEFAULT 'all',
+  total INT NOT NULL DEFAULT 0,
+  correct INT NOT NULL DEFAULT 0,
+  score DECIMAL(5,2) NOT NULL DEFAULT 0,
+  time_limit INT NOT NULL DEFAULT 0,
+  started_ts INT UNSIGNED NOT NULL,
+  finished_at DATETIME NULL,
+  duration INT NOT NULL DEFAULT 0,
+  KEY idx_user (user_id),
+  CONSTRAINT fk_a_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS attempt_answers (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  attempt_id INT UNSIGNED NOT NULL,
+  question_id INT UNSIGNED NOT NULL,
+  position INT NOT NULL,
+  chosen CHAR(1) NULL,
+  is_correct TINYINT(1) NOT NULL DEFAULT 0,
+  KEY idx_att (attempt_id),
+  KEY idx_q (question_id),
+  CONSTRAINT fk_aa_att FOREIGN KEY (attempt_id) REFERENCES attempts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_aa_q FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
